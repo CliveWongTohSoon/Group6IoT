@@ -8,6 +8,7 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+#From client, receive json data which is collected from sensor
 #Write to a simple database txt files for the colours received from the sensor
 @app.route('/tests', methods=['POST'])
 def my_test_endpoint():
@@ -19,13 +20,14 @@ def my_test_endpoint():
     dictToReturn = {'Response': 'Receieved!'}
     return jsonify(dictToReturn)
 
-#Send the data back to the browser when requested
+#Send the data back to the browser when requested throough POST request
 @app.route('/load_color', methods=['POST'])
 def load_color():
 	#Retrieve the data back from the txt file in json format
     message = json.load(open('simple-database.txt'))
     ori_hex = message["ori-color"]
     closest_hex = message["closest"]
+    #Retrieve from database and return to the front end browser
     if request.method == "POST":
         return jsonify(oriHex=ori_hex, closestHex=closest_hex)
 

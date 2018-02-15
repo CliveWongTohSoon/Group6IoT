@@ -15,20 +15,24 @@ CLIENT_ID = int.from_bytes(machine.unique_id(), 'big')
 BROKER_ADDRESS = '192.168.0.10'
 i2c = I2C(scl=Pin(5), sda=Pin(4), freq=100000)
 switchPin = machine.Pin(14, machine.Pin.IN, machine.Pin.PULL_UP)
-_CYCLES = (0, 1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60)
 topic = 'esys/Arcus/color'
 
 #Functions
+#Set integration time and maximum value of the sensor reading thus its quantisation level
 def integration_time(value=None):
         value = min(614.4, max(2.4, value))
         cycles = int(value / 2.4)
+        #Address 0x81 set the RGBC timing register
         i2c.writeto_mem(41,0x81,bytearray([256 - cycles]))
 
 def initialize():
     #Activate the sensor reading
+    #Address 0x80 set the enable register
     i2c.writeto_mem(41,0x80,bytearray([0x03]))
+    #Set the integration time to 2.4ms to set the max reading to 1024
     integration_time(2.4)
 
+#Read various colours and intensity
 def getGreen():
     green = i2c.readfrom_mem(41,0x98,2)
     return int.from_bytes(green,'little')
@@ -45,6 +49,7 @@ def getIntensity():
     clear = i2c.readfrom_mem(41,0x94,2)
     return int.from_bytes(clear,'little')
 
+#Convert RGB value and intensity value into temperature and lux
 def temperature_and_lux():
         r, g, b, c = getRed(),getGreen(),getBlue(),getIntensity()
         x = -0.14282 * r + 1.54924 * g + -0.95641 * b
@@ -55,6 +60,7 @@ def temperature_and_lux():
         cct = 449.0 * n**3 + 3525.0 * n**2 + 6823.3 * n + 5520.33
         return cct, y
 
+#Convert RGB value into different formats (hue, saturation, lightness, CMYK)
 def colourValue(r,g,b):
     R=r/255
     G=g/255
@@ -83,11 +89,13 @@ def colourValue(r,g,b):
 
     return Hue,S*100,L*100,V*100,C,M,Y,K
 
+#Convert RGB value into hex and return reading in various format
 def get_colour():
     r=getRed()
     g=getGreen()
     b=getBlue()
     c=getIntensity()
+    #Special case for intensity greater than 100 with different gain to get more accurate color for brighter color
     if c > 100:
         red=min(255,int(5.5*r))
         green=min(255,int(5*g))
@@ -100,10 +108,12 @@ def get_colour():
                              int(green),
                              int(blue))
 
+#Dump the data into json format
 def toPayLoad(message):
     payload = ujson.dumps(message)
     return payload
 
+#Connect to wifi
 def connectToWifi(id, password):
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(False)
@@ -117,6 +127,7 @@ def connectToWifi(id, password):
     client.connect()
     return client
 
+#Publish message to MQTT
 def publishMessage(client, topic, payload):
     client.publish(topic, bytes(payload, 'utf-8'))
 
