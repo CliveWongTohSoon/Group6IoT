@@ -8,7 +8,7 @@ import time
 #Test whether connected to script
 print("Hello World!")
 
-#Initial Variable
+#Initial Variables
 ourId = "EEERover"
 ourPassword = "exhibition"
 CLIENT_ID = int.from_bytes(machine.unique_id(), 'big')
@@ -148,12 +148,14 @@ def switchData():
 #main
 def main():
     initialize()
+    #Wait until the device is initialised, could use thread to do this to increase utilisation
     time.sleep(1)
     client = connectToWifi(id=ourId, password=ourPassword)
     while True:
         print('SwitchPin Value:', switchPin.value())
         if switchData() == True:
             sendData(client)
+        #Prevent spamming of data that overloads the server
         time.sleep(1)
 
 if __name__ == "__main__":

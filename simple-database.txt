@@ -1,1 +1,1 @@
-{"closest": "006600", "ori-color": "385531"}
+{"closest": "ffc040", "ori-color": "ffcd54"}
