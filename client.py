@@ -93,6 +93,7 @@ def on_message(client, userdata, msg):
     saturation = color_hex_input['Saturation']
     lightness = color_hex_input['Lightness']
 
+    #We are sending hex_val in this case, data from get_closest_color is not used to send to the server
     getClosestColor(hex_val)
     get_closest_color(hue, saturation, lightness)
 
